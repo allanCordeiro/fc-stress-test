@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -66,15 +67,32 @@ func run(url string, requestsQuantity int, concurrency int) {
 	}
 
 	fmt.Printf("Duration: %v\n", duration)
+	fmt.Printf("Total of requests: %d\n", requestsQuantity)
 	fmt.Printf("Total of http 200 responses: %d\n", statuses[200])
+	for status, count := range statuses {
+		if status != 200 {
+			fmt.Printf("Total of http %d responses: %d\n", status, count)
+		}
+	}
 }
 
 func makeRequest(url string) int {
-	req, err := http.Get(url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("Error making request: %v", err)
+		log.Fatal(err)
 		return 0
 	}
-	_ = req.Body.Close()
-	return req.StatusCode
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	defer resp.Body.Close()
+
+	//just reading the body because if delete this line we couldn't see the results in an accurate way.
+	io.ReadAll(resp.Body)
+
+	return resp.StatusCode
 }
