@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -43,6 +44,7 @@ func run(url string, requestsQuantity int, concurrency int) {
 	results := make(chan int, requestsQuantity)
 
 	startTime := time.Now()
+	fmt.Println("Benchmarking...")
 	for i := 0; i < requestsQuantity; i++ {
 		wg.Add(1)
 		requestChan <- struct{}{}
@@ -86,8 +88,7 @@ func makeRequest(url string) int {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
-		return 0
+		return resp.StatusCode
 	}
 	defer resp.Body.Close()
 
